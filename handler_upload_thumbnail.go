@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"mime"
@@ -71,10 +73,17 @@ func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 	}
 	var fileNameWithExtension string
 	extensionSplit := strings.Split(thumbnailMediaType, "/")
+	thumbnailFileName := make([]byte, 32)
+	n, err := rand.Read(thumbnailFileName)
+	if n != 32 {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't initialize random thumbnailname", err)
+		return
+	}
+	encodedThumbnailFileName := base64.RawURLEncoding.EncodeToString(thumbnailFileName)
 	if len(extensionSplit) != 2 {
-		fileNameWithExtension = videoIDString + ".bin"
+		fileNameWithExtension = encodedThumbnailFileName + ".bin"
 	} else {
-		fileNameWithExtension = videoIDString + "." + extensionSplit[1]
+		fileNameWithExtension = encodedThumbnailFileName + "." + extensionSplit[1]
 	}
 	path := filepath.Join(cfg.assetsRoot, fileNameWithExtension)
 	thumbnailFile, err := os.Create(path)
