@@ -124,6 +124,11 @@ func (cfg *apiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 		respondWithError(w, http.StatusInternalServerError, "Couldn't update video in db", err)
 		return
 	}
-	respondWithJSON(w, http.StatusOK, video)
+	updatedVideo, err := cfg.dbVideoToSignedVideo(video)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't sign video URL", err)
+		return
+	}
+	respondWithJSON(w, http.StatusOK, updatedVideo)
 
 }
