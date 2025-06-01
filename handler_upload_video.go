@@ -81,6 +81,16 @@ func (cfg *apiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 		respondWithError(w, http.StatusInternalServerError, "Couldn't get video Aspect Ratio", err)
 		return
 	}
+	processedFilePath, err := processVideoForFastStart(localFile.Name())
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't process video for fast start", err)
+		return
+	}
+	localFile, err = os.Open(processedFilePath)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't upload processed file", err)
+		return
+	}
 	randKey := make([]byte, 32)
 	n, err := rand.Read(randKey)
 	if n != 32 {
@@ -106,7 +116,7 @@ func (cfg *apiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 		respondWithError(w, http.StatusInternalServerError, "Couldn't put Object", err)
 		return
 	}
-	URL := fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", cfg.s3Bucket, cfg.s3Region, fileKey)
+	URL := fmt.Sprintf("%s,%s", cfg.s3Bucket, fileKey)
 	video.VideoURL = &URL
 	video.UpdatedAt = time.Now()
 	err = cfg.db.UpdateVideo(video)

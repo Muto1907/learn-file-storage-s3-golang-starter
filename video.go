@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"math"
 	"os/exec"
+	"path"
+	"strings"
 )
 
 func getVideoAspectRatio(filepath string) (string, error) {
@@ -27,6 +29,16 @@ func getVideoAspectRatio(filepath string) (string, error) {
 		return "9:16", nil
 	}
 	return "other", nil
+}
+
+func processVideoForFastStart(filepath string) (string, error) {
+	outputFilePath := strings.TrimSuffix(filepath, path.Ext(filepath)) + ".processing" + path.Ext(filepath)
+	cmd := exec.Command("ffmpeg", "-i", filepath, "-c", "copy", "-movflags", "faststart", "-f", "mp4", outputFilePath)
+	err := cmd.Run()
+	if err != nil {
+		return "", err
+	}
+	return outputFilePath, nil
 }
 
 type ouput struct {
